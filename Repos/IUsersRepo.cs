@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using firstProjectApi.Models;
 using firstprojectcontextlib;
 
 namespace firstProjectApi.Repos
@@ -11,5 +12,7 @@ namespace firstProjectApi.Repos
         Task<User> RetrieveAsync(int id);
         Task<User> UpdateAsync(User user);
         Task<bool> DeleteAsync(int id);
+        Task<dynamic> Authenticate(AuthenticateModel model);
+        dynamic GenerateToken(User user);
     }
 }

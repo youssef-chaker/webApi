@@ -1,58 +1,70 @@
-using System;
 using Microsoft.AspNetCore.Mvc;
 using firstProjectApi.Repos;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
+using firstProjectApi.Models;
 using firstprojectcontextlib;
+using Microsoft.AspNetCore.Authorization;
 
 namespace firstProjectApi.Controllers
 {
     [Route("/api/[controller]")]
     [ApiController]
-    public class CustomersController : ControllerBase
+    public class UsersController : ControllerBase
     {
-        private IUsersRepo repo;
+        private readonly IUsersRepo _repo;
 
-        public CustomersController(IUsersRepo repo)
+        public UsersController(IUsersRepo repo)
         {
-            this.repo = repo;
+            this._repo = repo;
         }
 
         [HttpGet]
+        [Authorize(Roles = "admin")]
         [ProducesResponseType(200, Type = typeof(IEnumerable<User>))]
         public async Task<IEnumerable<User>> GetUsers()
         {
-            return await repo.RetrieveAllAsync();
+            return await _repo.RetrieveAllAsync();
         }
 
         [HttpGet("{id}", Name = nameof(GetUser))]
+        [Authorize(Roles = "admin")]
         [ProducesResponseType(200, Type = typeof(User))]
         [ProducesResponseType(400)]
         public async Task<IActionResult> GetUser(int id)
         {
-            User user = await repo.RetrieveAsync(id);
+            User user = await _repo.RetrieveAsync(id);
             if (user == null)
             {
                 return NotFound();
             }
 
+            user.Salt = null;
             return Ok(user);
         }
 
-        [HttpPost]
+        [HttpPost("register")]
+        [AllowAnonymous]
         [ProducesResponseType(201, Type = typeof(User))]
         [ProducesResponseType(400)]
-        public async Task<IActionResult> Create([FromBody] User user)
+        public async Task<IActionResult> Create([FromBody] RegisterModel model)
         {
-            if (user == null) return BadRequest();
+            if (model == null) return BadRequest();
             if (!ModelState.IsValid) return BadRequest(ModelState);
-            User addedUser = await repo.CreateAsync(user);
+            User user = new User
+            {
+                Email = model.Email,
+                Username = model.Username,
+                Password = model.Password,
+                Role = "user"
+            };
+            User addedUser = await _repo.CreateAsync(user);
             return CreatedAtRoute(routeName: nameof(GetUser), routeValues: new {id = addedUser.UserId},
-                value: addedUser);
+                value: _repo.GenerateToken(user));
         }
 
         [HttpPut("{id}")]
+        [Authorize(Roles = "admin")]
         [ProducesResponseType(204)]
         [ProducesResponseType(400)]
         [ProducesResponseType(404)]
@@ -68,31 +80,31 @@ namespace firstProjectApi.Controllers
                 return BadRequest(ModelState);
             }
 
-            var existing = await repo.RetrieveAsync(id);
+            var existing = await _repo.RetrieveAsync(id);
             if (existing == null)
             {
                 return NotFound();
             }
 
-            await repo.UpdateAsync(user);
+            await _repo.UpdateAsync(user);
             return NoContent();
             
         }
-
-
+        
         [HttpDelete("{id}")]
+        [Authorize(Roles = "admin")]
         [ProducesResponseType(204)]
         [ProducesResponseType(400)]
         [ProducesResponseType(404)]
         public async Task<IActionResult> Delete(int id)
         {
-            var existing = repo.RetrieveAsync(id);
+            var existing = _repo.RetrieveAsync(id);
             if (existing == null)
             {
                 return NotFound();
             }
 
-            bool deleted = await repo.DeleteAsync(id);
+            bool deleted = await _repo.DeleteAsync(id);
 
             if (deleted)
             {
@@ -103,6 +115,15 @@ namespace firstProjectApi.Controllers
                 return BadRequest("some error could not delete user");
             }
             
+        }
+
+        [HttpPost("authenticate")]
+        [AllowAnonymous]
+        public async Task<IActionResult> Authenticate([FromBody] AuthenticateModel model)
+        {
+            var tokenObject = await _repo.Authenticate(model);
+            if (tokenObject == null) return BadRequest(new {message = "username or password is incorrect / user does not exist"});
+            return new ObjectResult(await _repo.Authenticate(model));
         }
 
         
