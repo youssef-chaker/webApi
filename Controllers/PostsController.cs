@@ -28,7 +28,7 @@ namespace firstProjectApi.Controllers
             return await _repo.RetrieveAllAsync();
         }
         
-        [HttpGet("{id}")]
+        [HttpGet("{id}",Name = nameof(GetPost))]
         [AllowAnonymous]
         [ProducesResponseType(200, Type = typeof(Post))]
         [ProducesResponseType(404)]
@@ -62,9 +62,7 @@ namespace firstProjectApi.Controllers
             {
                 return BadRequest();
             }
-
-            Console.WriteLine(addedPost.PostId);
-
+            
             return CreatedAtRoute(routeName: nameof(GetPost), routeValues: new {id = addedPost.PostId},
                 value: post);
 
