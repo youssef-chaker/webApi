@@ -1,7 +1,9 @@
+using System;
 using Microsoft.AspNetCore.Mvc;
 using firstProjectApi.Repos;
 using System.Collections.Generic;
-using System.Threading;
+using System.Linq;
+using System.Security.Claims;
 using System.Threading.Tasks;
 using firstProjectApi.Models;
 using firstprojectcontextlib;
@@ -19,7 +21,7 @@ namespace firstProjectApi.Controllers
         {
             this._repo = repo;
         }
-
+        
         [HttpGet]
         [Authorize(Roles = "admin")]
         [ProducesResponseType(200, Type = typeof(IEnumerable<User>))]

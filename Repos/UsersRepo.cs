@@ -35,12 +35,9 @@ namespace firstProjectApi.Repos
             return Task.Run<IEnumerable<User>>(() => _db.Users);
         }
 
-        public Task<User> RetrieveAsync(int id)
+        public async Task<User> RetrieveAsync(int id)
         {
-            return Task.Run(() =>
-            {
-                return _db.Users.Where(user => user.UserId == id).FirstAsync();
-            });
+            return await _db.Users.Where(user => user.UserId == id).FirstAsync();
         }
 
         public async Task<User> UpdateAsync(User user)

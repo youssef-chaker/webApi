@@ -37,6 +37,7 @@ namespace firstProjectApi
             });
             services.AddDbContext<FirstProject>();
             services.AddScoped<IUsersRepo, UsersRepo>();
+            services.AddScoped<IPostsRepo, PostsRepo>();
             services.AddControllers();
             services.AddAuthentication(options =>
             {
@@ -54,6 +55,7 @@ namespace firstProjectApi
                     ClockSkew = TimeSpan.FromMinutes(5)
                 };
             });
+            
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
